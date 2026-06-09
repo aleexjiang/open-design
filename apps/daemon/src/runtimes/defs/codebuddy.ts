@@ -63,6 +63,15 @@ export const codebuddyAgentDef = {
     // Codebuddy CLI does not ship a `models` subcommand; the supported model
     // ids are advertised in `--help` output. Fallback list above covers the
     // current set; users can type custom ids through the "Custom" input.
+    reasoningOptions: [
+      { id: 'default', label: 'Default' },
+      { id: 'minimal', label: 'Minimal' },
+      { id: 'low', label: 'Low' },
+      { id: 'medium', label: 'Medium' },
+      { id: 'high', label: 'High' },
+      { id: 'xhigh', label: 'XHigh' },
+      { id: 'max', label: 'Max' },
+    ],
     buildArgs: (_prompt, _imagePaths, extraAllowedDirs = [], options = {}, runtimeContext = {}) => {
       const caps = agentCapabilities.get('codebuddy') || {};
       // Same stdin strategy as Claude Code: `--input-format stream-json`

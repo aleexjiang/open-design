@@ -140,3 +140,46 @@ describe('codebuddy definition metadata', () => {
     expect(codebuddyAgentDef.docsUrl).toBe('https://www.codebuddy.cn/docs/workbuddy/Overview');
   });
 });
+
+describe('codebuddy reasoning round-trip', () => {
+  it('declares reasoningOptions so the daemon sanitizer does not drop effort', () => {
+    expect(codebuddyAgentDef.reasoningOptions).toBeDefined();
+    expect(codebuddyAgentDef.reasoningOptions!.length).toBeGreaterThan(0);
+  });
+
+  it('lists all Codebuddy effort levels as reasoningOptions', () => {
+    const ids = codebuddyAgentDef.reasoningOptions!.map((o) => o.id);
+    expect(ids).toEqual(['default', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+  });
+
+  it('survives sanitization: a valid reasoning option lands in argv', () => {
+    // Simulates the daemon sanitizer: only pass reasoning if the value
+    // appears in the adapter's declared reasoningOptions.
+    const validIds = new Set(codebuddyAgentDef.reasoningOptions!.map((o) => o.id));
+    const selected = 'xhigh';
+    expect(validIds.has(selected)).toBe(true);
+
+    const args = codebuddyAgentDef.buildArgs('', [], [], { reasoning: selected }, {});
+    expect(args).toContain('--effort');
+    expect(args[args.indexOf('--effort') + 1]).toBe('xhigh');
+  });
+
+  it('drops an undeclared reasoning value (simulating sanitizer)', () => {
+    const validIds = new Set(codebuddyAgentDef.reasoningOptions!.map((o) => o.id));
+    const invalid = 'ultra';
+    expect(validIds.has(invalid)).toBe(false);
+
+    // After sanitizer strips the invalid value, buildArgs receives no reasoning.
+    const args = codebuddyAgentDef.buildArgs('', [], [], {}, {});
+    expect(args).not.toContain('--effort');
+  });
+
+  it('every reasoning option maps to a valid --effort flag', () => {
+    for (const opt of codebuddyAgentDef.reasoningOptions!) {
+      if (opt.id === 'default') continue; // default means no --effort flag
+      const args = codebuddyAgentDef.buildArgs('', [], [], { reasoning: opt.id }, {});
+      expect(args).toContain('--effort');
+      expect(args[args.indexOf('--effort') + 1]).toBe(opt.id);
+    }
+  });
+});
