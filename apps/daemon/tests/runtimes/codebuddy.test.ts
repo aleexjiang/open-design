@@ -149,7 +149,8 @@ describe('codebuddy reasoning round-trip', () => {
 
   it('lists all Codebuddy effort levels as reasoningOptions', () => {
     const ids = codebuddyAgentDef.reasoningOptions!.map((o) => o.id);
-    expect(ids).toEqual(['default', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+    // Codebuddy CLI --effort supports exactly: minimal, low, medium, high, xhigh, max
+    expect(ids).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
   });
 
   it('survives sanitization: a valid reasoning option lands in argv', () => {
@@ -176,7 +177,8 @@ describe('codebuddy reasoning round-trip', () => {
 
   it('every reasoning option maps to a valid --effort flag', () => {
     for (const opt of codebuddyAgentDef.reasoningOptions!) {
-      if (opt.id === 'default') continue; // default means no --effort flag
+      // Every declared option should produce a --effort flag (there is no
+      // "default" id — omitting reasoning entirely means no flag).
       const args = codebuddyAgentDef.buildArgs('', [], [], { reasoning: opt.id }, {});
       expect(args).toContain('--effort');
       expect(args[args.indexOf('--effort') + 1]).toBe(opt.id);

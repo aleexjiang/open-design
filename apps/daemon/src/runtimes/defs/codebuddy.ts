@@ -63,8 +63,11 @@ export const codebuddyAgentDef = {
     // Codebuddy CLI does not ship a `models` subcommand; the supported model
     // ids are advertised in `--help` output. Fallback list above covers the
     // current set; users can type custom ids through the "Custom" input.
+    // Codebuddy CLI --effort supports exactly these 6 levels:
+    //   minimal, low, medium, high, xhigh, max
+    // No "default" level — omitting --effort entirely lets Codebuddy use
+    // its own default, which is modelled by an empty reasoning selection.
     reasoningOptions: [
-      { id: 'default', label: 'Default' },
       { id: 'minimal', label: 'Minimal' },
       { id: 'low', label: 'Low' },
       { id: 'medium', label: 'Medium' },
