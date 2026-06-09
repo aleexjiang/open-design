@@ -162,7 +162,9 @@ describe('codebuddy reasoning round-trip', () => {
   });
 
   it('puts "default" first so AvatarMenu/SettingsDialog fall back to it', () => {
-    expect(codebuddyAgentDef.reasoningOptions![0].id).toBe('default');
+    const first = codebuddyAgentDef.reasoningOptions![0];
+    expect(first).toBeDefined();
+    expect(first!.id).toBe('default');
   });
 
   it('survives sanitization: a valid reasoning option lands in argv', () => {
