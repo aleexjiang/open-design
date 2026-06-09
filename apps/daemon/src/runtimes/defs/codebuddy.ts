@@ -63,11 +63,15 @@ export const codebuddyAgentDef = {
     // Codebuddy CLI does not ship a `models` subcommand; the supported model
     // ids are advertised in `--help` output. Fallback list above covers the
     // current set; users can type custom ids through the "Custom" input.
-    // Codebuddy CLI --effort supports exactly these 6 levels:
+    // Codebuddy CLI --effort supports exactly 6 levels:
     //   minimal, low, medium, high, xhigh, max
-    // No "default" level — omitting --effort entirely lets Codebuddy use
-    // its own default, which is modelled by an empty reasoning selection.
+    // We additionally expose a synthetic `default` sentinel as the FIRST
+    // option so the web pickers (AvatarMenu / SettingsDialog) — which
+    // fall back to `reasoningOptions[0].id` when nothing is saved yet —
+    // surface a real "use Codebuddy's own default" choice that round-trips
+    // to "no --effort flag". `buildArgs` treats `default` as omit.
     reasoningOptions: [
+      { id: 'default', label: 'Default' },
       { id: 'minimal', label: 'Minimal' },
       { id: 'low', label: 'Low' },
       { id: 'medium', label: 'Medium' },
@@ -90,7 +94,8 @@ export const codebuddyAgentDef = {
         args.push('--model', options.model);
       }
       // Reasoning effort control — Codebuddy supports `--effort <level>`.
-      if (options.reasoning) {
+      // The `default` sentinel means "let Codebuddy pick" — omit the flag.
+      if (options.reasoning && options.reasoning !== 'default') {
         args.push('--effort', options.reasoning);
       }
       const dirs = (extraAllowedDirs || []).filter(

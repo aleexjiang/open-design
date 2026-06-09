@@ -47,6 +47,13 @@ describe('codebuddy buildArgs', () => {
     expect(args).not.toContain('--effort');
   });
 
+  it('omits --effort when reasoning is the synthetic "default" sentinel', () => {
+    // The picker fallback `reasoningOptions[0].id` is "default", which must
+    // round-trip to "no --effort flag" so Codebuddy uses its own default.
+    const args = codebuddyAgentDef.buildArgs('', [], [], { reasoning: 'default' }, {});
+    expect(args).not.toContain('--effort');
+  });
+
   it('passes --add-dir for valid extra dirs', () => {
     const args = codebuddyAgentDef.buildArgs('', [], ['/repo/skills', '/repo/design-systems'], {}, {});
     expect(args).toContain('--add-dir');
@@ -149,8 +156,13 @@ describe('codebuddy reasoning round-trip', () => {
 
   it('lists all Codebuddy effort levels as reasoningOptions', () => {
     const ids = codebuddyAgentDef.reasoningOptions!.map((o) => o.id);
-    // Codebuddy CLI --effort supports exactly: minimal, low, medium, high, xhigh, max
-    expect(ids).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+    // First item is the synthetic "default" sentinel (drives picker
+    // fallback to "omit --effort"), followed by the 6 real CLI levels.
+    expect(ids).toEqual(['default', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+  });
+
+  it('puts "default" first so AvatarMenu/SettingsDialog fall back to it', () => {
+    expect(codebuddyAgentDef.reasoningOptions![0].id).toBe('default');
   });
 
   it('survives sanitization: a valid reasoning option lands in argv', () => {
@@ -175,13 +187,17 @@ describe('codebuddy reasoning round-trip', () => {
     expect(args).not.toContain('--effort');
   });
 
-  it('every reasoning option maps to a valid --effort flag', () => {
+  it('every reasoning option maps correctly: real levels emit --effort, "default" omits it', () => {
     for (const opt of codebuddyAgentDef.reasoningOptions!) {
-      // Every declared option should produce a --effort flag (there is no
-      // "default" id — omitting reasoning entirely means no flag).
       const args = codebuddyAgentDef.buildArgs('', [], [], { reasoning: opt.id }, {});
-      expect(args).toContain('--effort');
-      expect(args[args.indexOf('--effort') + 1]).toBe(opt.id);
+      if (opt.id === 'default') {
+        // Synthetic sentinel — must NOT emit --effort.
+        expect(args).not.toContain('--effort');
+      } else {
+        // Real CLI level — must emit --effort <id>.
+        expect(args).toContain('--effort');
+        expect(args[args.indexOf('--effort') + 1]).toBe(opt.id);
+      }
     }
   });
 });
